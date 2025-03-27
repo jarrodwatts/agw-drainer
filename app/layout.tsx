@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import AbstractWalletWrapper from "@/components/NextAbstractWalletProvider";
 import "./globals.css";
-import { AbstractWalletProvider } from "@abstract-foundation/agw-react";
-import { abstractTestnet } from "viem/chains";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,9 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <AbstractWalletProvider chain={abstractTestnet}>
+        <AbstractWalletWrapper>
           {children}
-        </AbstractWalletProvider>
+        </AbstractWalletWrapper>
       </body>
     </html>
   );
