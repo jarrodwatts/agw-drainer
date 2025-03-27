@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+
+/contracts/cache/
+/contracts/lib/*
+/contracts/zkout/
+/contracts/broadcast/
+/contracts/broadcast/*/31337/
+/contracts/broadcast/**/dry-run/
+/contracts/docs/
+/contracts/.env
